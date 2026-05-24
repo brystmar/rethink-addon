@@ -27,5 +27,4 @@ COPY run.sh /app/run.sh
 RUN mkdir -p /app/data
 
 EXPOSE 4433 8884 1884 46030 47878 44401
--CMD ["sh", "-c", "[ -f /app/data/config.json ] || cp /app/config.json /app/data/config.json; exec node dist/rethink-cloud.js /app/data/config.json"]
-+CMD ["/app/run.sh"]
+CMD ["/app/run.sh"]
