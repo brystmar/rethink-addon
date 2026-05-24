@@ -22,16 +22,16 @@ compatible with Home Assistant MQTT Discovery out of the box.
 
 Start the addon and configure it via the Configuration tab:
 
-| Option | Description | Default |
-|---|---|---|
-| `hostname` | Hostname Rethink advertises | `rethink.lgthinq.com` |
-| `mqtt_url` | Your MQTT broker URL | `mqtt://rethink.lgthinq.com:1883` |
-| `discovery_prefix` | HA MQTT discovery prefix | `homeassistant` |
-| `rethink_prefix` | MQTT topic prefix for device state | `rethink` |
-| `https_port` | Port for ThinQ HTTPS interception | `4433` |
-| `management_port` | Port for the Rethink management UI | `44401` |
-| `mqtt_user` | MQTT username (if required) | |
-| `mqtt_pass` | MQTT password (if required) | |
+| Option             | Description                        | Default                           |
+| ------------------ | ---------------------------------- | --------------------------------- |
+| `hostname`         | Hostname Rethink advertises        | `rethink.lgthinq.com`             |
+| `mqtt_url`         | Your MQTT broker URL               | `mqtt://rethink.lgthinq.com:1883` |
+| `discovery_prefix` | HA MQTT discovery prefix           | `homeassistant`                   |
+| `rethink_prefix`   | MQTT topic prefix for device state | `rethink`                         |
+| `https_port`       | Port for ThinQ HTTPS interception  | `4433`                            |
+| `management_port`  | Port for the Rethink management UI | `44401`                           |
+| `mqtt_user`        | MQTT username (if required)        |                                   |
+| `mqtt_pass`        | MQTT password (if required)        |                                   |
 
 ### 2. Set up MQTT
 
@@ -91,11 +91,11 @@ this confirms the intercept is working.
 
 Fill in the pairing options in the addon configuration:
 
-| Option | Description |
-|---|---|
-| `setup_ip` | IP used during appliance Wi-Fi setup (usually `192.168.120.254`) |
-| `wifi_ssid` | Your home Wi-Fi SSID |
-| `wifi_password` | Your home Wi-Fi password |
+| Option          | Description                                                      |
+| --------------- | ---------------------------------------------------------------- |
+| `setup_ip`      | IP used during appliance Wi-Fi setup (usually `192.168.120.254`) |
+| `wifi_ssid`     | Your home Wi-Fi SSID                                             |
+| `wifi_password` | Your home Wi-Fi password                                         |
 
 ### ThinQ2 devices
 
