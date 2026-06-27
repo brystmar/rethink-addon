@@ -422,7 +422,9 @@ export default class Device extends AABBDevice {
                         name: 'Run state',
                         icon: 'mdi:state-machine',
                         device_class: 'enum',
-                        options: [...new Set(Object.values(STATES))],
+                        // 'Delayed Start' is an overlay on raw STATES.Running when a
+                        // reservation (delayed-end) timer is active — see processAABB.
+                        options: [...new Set([...Object.values(STATES), 'Delayed Start'])],
                     },
                     process_state: {
                         platform: 'sensor',
@@ -576,9 +578,15 @@ export default class Device extends AABBDevice {
         const hasError = errorCode !== 0
         const remoteStart = !!(flags15 & FLAG15_REMOTE_START)
         const antiCrease = !!(flags14 & FLAG14_ANTI_CREASE)
+        // LG firmware reports Bd[0]=Running throughout the entire delayed-end
+        // window (drum not spinning, no power draw). Treat that as a distinct
+        // 'Delayed Start' state so consumers can tell the difference between
+        // "committed, waiting for reservation" and "actually drying".
+        const isDelayed = isRunning && reservation !== 0
 
-        // Track cycle start time — set on first Running packet, cleared on Off/End
-        if (isRunning && !this.cycleStartTime) {
+        // Track cycle start time — only set when the drum actually starts
+        // (i.e. Running with no active reservation). Cleared on Off/End.
+        if (isRunning && !isDelayed && !this.cycleStartTime) {
             this.cycleStartTime = new Date()
             this.publishProperty('cycle_start_time', this.cycleStartTime.toISOString())
         } else if (isOff || isEnd) {
@@ -594,7 +602,7 @@ export default class Device extends AABBDevice {
         }
 
         this.publishProperty('power', isOff ? 'OFF' : 'ON')
-        this.publishProperty('run_state', STATES[state] ?? `unknown (${state})`)
+        this.publishProperty('run_state', isDelayed ? 'Delayed Start' : (STATES[state] ?? `unknown (${state})`))
         this.publishProperty(
             'process_state',
             isOff ? '-' : (PROCESS_STATES[processState] ?? `unknown (${processState})`),
@@ -604,8 +612,19 @@ export default class Device extends AABBDevice {
         this.publishProperty('remote_start', remoteStart ? 'ON' : 'OFF')
         this.publishProperty('run_completed', isEnd ? 'ON' : 'OFF')
 
-        // Cycle timing — only meaningful while running
-        if (this.cycleStartTime) {
+        // Cycle timing
+        //   Delayed Start  → project end = now + reservation, start = end - initial_time.
+        //                    Duration stays 0 because the cycle hasn't actually begun.
+        //   Running        → measured from this.cycleStartTime (set above).
+        //   Off / Initial  → cleared placeholders.
+        if (isDelayed) {
+            const now = new Date()
+            const endTime = new Date(now.getTime() + reservation * 60 * 60 * 1000)
+            const startTime = new Date(endTime.getTime() - initialTime * 60 * 1000)
+            this.publishProperty('cycle_duration', 0)
+            this.publishProperty('cycle_start_time', startTime.toISOString())
+            this.publishProperty('cycle_end_time', endTime.toISOString())
+        } else if (this.cycleStartTime) {
             const now = new Date()
             const durationMin = Math.floor((now.getTime() - this.cycleStartTime.getTime()) / 60000)
             const endTime = new Date(now.getTime() + remainingTime * 60000)

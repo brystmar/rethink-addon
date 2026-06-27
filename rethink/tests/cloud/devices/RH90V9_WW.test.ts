@@ -58,6 +58,14 @@ const SAMPLE_RESERVATION = buf(
     'AA3830EC001900000000000000000000000000000000000000000000000000001901000000000600000000040000000000000000000000000000C4BB',
 )
 
+// Delayed Start — Running (Bd[0]=02) with active 4h reservation (Bd[10]=04).
+// initial_time = 30min (Bd[3]=00, Bd[4]=0x1E). Drum not yet spinning.
+const SAMPLE_DELAYED_START = buf(
+    'AA3830EC001900000000000000000000000000000000000000000000000000001902040000' +
+        '1E0600030302040000000000000000000000000000' +
+        '00BB',
+)
+
 // Downloaded cycle — Sports Wear base + Gym Clothes SmartCourse (Bd[23]=0x66)
 const SAMPLE_DOWNLOADED = buf(
     'AA3830EC001900000000000000000000000000000000000000000000000000001902000000000800000000000000000000000000000000006600A3BB',
@@ -223,6 +231,77 @@ describe(MODEL_ID, () => {
         const { ha, thinq } = makeDevice()
         thinq.emit('data', SAMPLE_RESERVATION)
         assert.equal(ha.devices[DEVICE_ID].properties.reservation, '4h')
+    })
+
+    // ── Delayed Start overlay ─────────────────────────────────────────────────
+
+    test('run_state options include Delayed Start', () => {
+        const { ha } = makeDevice()
+        const cfg = ha.devices[DEVICE_ID].config!
+        const options = (cfg.components as any).run_state.options as string[]
+        assert.ok(options.includes('Delayed Start'), 'run_state options include Delayed Start')
+    })
+
+    test('Running + non-zero reservation publishes run_state = Delayed Start', () => {
+        const { ha, thinq } = makeDevice()
+        thinq.emit('data', SAMPLE_DELAYED_START)
+        assert.equal(ha.devices[DEVICE_ID].properties.run_state, 'Delayed Start')
+    })
+
+    test('Delayed Start keeps cycle_duration at 0', () => {
+        const { ha, thinq } = makeDevice()
+        thinq.emit('data', SAMPLE_DELAYED_START)
+        assert.equal(ha.devices[DEVICE_ID].properties.cycle_duration, 0)
+    })
+
+    test('Delayed Start projects cycle_end_time = now + reservation hours', () => {
+        const { ha, thinq } = makeDevice()
+        const before = Date.now()
+        thinq.emit('data', SAMPLE_DELAYED_START) // 4h reservation
+        const endTime = ha.devices[DEVICE_ID].properties.cycle_end_time as string
+        const parsed = new Date(endTime).getTime()
+        const expected = before + 4 * 60 * 60 * 1000
+        assert.ok(Math.abs(parsed - expected) < 5000, `cycle_end_time ≈ now + 4h (got ${endTime})`)
+    })
+
+    test('Delayed Start projects cycle_start_time = end - initial_time', () => {
+        const { ha, thinq } = makeDevice()
+        const before = Date.now()
+        thinq.emit('data', SAMPLE_DELAYED_START) // 4h reservation, initial 30min
+        const startTime = ha.devices[DEVICE_ID].properties.cycle_start_time as string
+        const parsed = new Date(startTime).getTime()
+        // end = now + 4h, start = end - 30min → now + 3h30min
+        const expected = before + (4 * 60 - 30) * 60 * 1000
+        assert.ok(Math.abs(parsed - expected) < 5000, `cycle_start_time ≈ now + 3h30 (got ${startTime})`)
+    })
+
+    test('transition Delayed → real Running sets measured cycleStartTime', () => {
+        const { ha, thinq } = makeDevice()
+        thinq.emit('data', SAMPLE_DELAYED_START)
+        const projectedStart = ha.devices[DEVICE_ID].properties.cycle_start_time as string
+        // Now the dryer actually starts drying — reservation drops to 0
+        thinq.emit('data', SAMPLE_RUNNING)
+        const measuredStart = ha.devices[DEVICE_ID].properties.cycle_start_time as string
+        assert.notEqual(measuredStart, projectedStart, 'start time switches to measured value')
+        // Measured start should be ≈ now (within a few seconds), not 3h30m in the future
+        const drift = Math.abs(new Date(measuredStart).getTime() - Date.now())
+        assert.ok(drift < 5000, `measured cycle_start_time is current (drift=${drift}ms)`)
+        assert.equal(ha.devices[DEVICE_ID].properties.run_state, 'Running')
+    })
+
+    // ── Start payload reservation default ─────────────────────────────────────
+
+    test('start with empty reservation defaults to 0 (not cached from previous run)', () => {
+        const { thinq, dev } = makeDevice()
+        // Simulate: dryer was last running with a 4h reservation showing
+        thinq.emit('data', SAMPLE_DELAYED_START)
+        thinq.resetRecorder()
+        // New start call omits reservation — must default to 0, not carry forward
+        dev.setProperty('start', JSON.stringify({ cycle: 'Mixed Fabric' }))
+        assert.equal(thinq.outbox.length, 1)
+        const raw = thinq.outbox[0]
+        const inner = raw[0] === 0xaa ? raw.subarray(2, raw.length - 2) : raw
+        assert.equal(inner[8], 0, 'reservation defaults to 0 when payload omits it')
     })
 
     test('downloaded cycle ID decoded from Bd[23]', () => {
