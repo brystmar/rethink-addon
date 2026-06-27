@@ -7,21 +7,24 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### ⚠️ Breaking — upgrade procedure
 
-Entity layout for the LG Dryer (RH90V9_WW) changed in this release. To
-avoid stale/duplicated entities in Home Assistant:
+Entity layout for the LG Dryer (RH90V9_WW) changed in this release. The
+add-on update alone will not clean up the orphaned `Delayed end` sensor
+because its MQTT Discovery message is retained on the broker. To get a
+clean layout:
 
-1. **Stop the Rethink add-on.**
-2. **Delete the dryer device from Home Assistant's MQTT integration**
+1. **Update the Rethink add-on** to 1.1.0 (Settings → Add-ons → Rethink
+   → Update). The supervisor will restart the add-on on the new image.
+2. **Stop the Rethink add-on.**
+3. **Delete the dryer device from Home Assistant's MQTT integration**
    (Settings → Devices & Services → MQTT → device → ⋮ → Delete). This
-   clears retained discovery messages for the removed/renamed entities.
-3. **Start the Rethink add-on.** The device will be re-published with
-   the new entity layout. Any automations referencing removed entities
-   (see below) must be updated.
+   clears the retained discovery messages for the removed entities.
+4. **Start the Rethink add-on.** It will republish the device with the
+   new entity layout. Any automations referencing the removed
+   `sensor.<...>_delayed_end` must be updated to use `run_state ==
+"Delayed Start"` and/or `cycle_end_time` instead.
 
-This dance is needed because MQTT Discovery messages are retained on
-the broker; removing a sensor in code does not by itself unpublish the
-existing retained config. (Yes, a native HA integration would handle
-this transparently — see the project README for context.)
+(A native HA integration would handle this transparently — see the
+project README for context.)
 
 ### LG Dryer (RH90V9_WW)
 
