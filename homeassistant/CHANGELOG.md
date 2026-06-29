@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### LG Dryer (RH90V9_WW)
+
+- **Changed** `cycle_start_time` and `cycle_end_time` are now pegged to the
+  start of the minute, so HA's relative-time display ticks predictably
+  instead of jittering by seconds between packets.
+- **Changed** empty/cleared sensor values (`process_state`, `error`,
+  `cycle_duration`, `cycle_end_time`) are now published as an empty string
+  instead of `"-"`, so HA renders them as "Unknown" rather than a literal
+  dash.
+
 ## [1.1.0] — 2026-06-28
 
 ### ⚠️ Breaking — upgrade procedure
