@@ -496,16 +496,16 @@ describe(MODEL_ID, () => {
         const { ha, thinq } = makeDevice()
         thinq.emit('data', SAMPLE_RUNNING)
         thinq.emit('data', SAMPLE_END)
-        assert.equal(ha.devices[DEVICE_ID].properties.cycle_duration, '')
-        assert.equal(ha.devices[DEVICE_ID].properties.cycle_end_time, '')
+        assert.equal(ha.devices[DEVICE_ID].properties.cycle_duration, 'None')
+        assert.equal(ha.devices[DEVICE_ID].properties.cycle_end_time, 'None')
     })
 
     test('cycle timing cleared on Off state', () => {
         const { ha, thinq } = makeDevice()
         thinq.emit('data', SAMPLE_RUNNING)
         thinq.emit('data', SAMPLE_OFF)
-        assert.equal(ha.devices[DEVICE_ID].properties.cycle_duration, '')
-        assert.equal(ha.devices[DEVICE_ID].properties.cycle_end_time, '')
+        assert.equal(ha.devices[DEVICE_ID].properties.cycle_duration, 'None')
+        assert.equal(ha.devices[DEVICE_ID].properties.cycle_end_time, 'None')
     })
 
     test('start_time not reset on subsequent Running packets', () => {
@@ -522,7 +522,7 @@ describe(MODEL_ID, () => {
     test('process state shows - when dryer is off', () => {
         const { ha, thinq } = makeDevice()
         thinq.emit('data', SAMPLE_OFF)
-        assert.equal(ha.devices[DEVICE_ID].properties.process_state, '')
+        assert.equal(ha.devices[DEVICE_ID].properties.process_state, 'Off')
     })
 
     test('process state shows Dry when running', () => {

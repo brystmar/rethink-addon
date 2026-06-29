@@ -7,10 +7,14 @@
 - **Changed** `cycle_start_time` and `cycle_end_time` are now pegged to the
   start of the minute, so HA's relative-time display ticks predictably
   instead of jittering by seconds between packets.
-- **Changed** empty/cleared sensor values (`process_state`, `error`,
-  `cycle_duration`, `cycle_end_time`) are now published as an empty string
-  instead of `"-"`, so HA renders them as "Unknown" rather than a literal
-  dash.
+- **Changed** cleared sensor values now publish `"None"` (rendered as
+  "Unknown" in HA) instead of `"-"` or empty string: `error_message`,
+  `cycle_duration`, `cycle_start_time`, `cycle_end_time`. `process_state`
+  publishes `"Off"` when the dryer is off (semantically accurate vs
+  unknown).
+- **Fixed** `cycle_start_time` was never republished when a cycle ended,
+  so HA kept showing the last cycle's start time indefinitely. Now
+  cleared alongside `cycle_end_time` and `cycle_duration`.
 
 ## [1.1.0] — 2026-06-28
 

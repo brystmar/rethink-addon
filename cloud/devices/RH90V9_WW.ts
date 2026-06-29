@@ -79,7 +79,7 @@ const PROCESS_STATES: Record<number, string> = {
 
 // Bd[6] — error code (modelJson error.valueMapping indices)
 const ERRORS: Record<number, string> = {
-    0: '',
+    0: 'None',
     1: 'TE1 (temperature)',
     2: 'TE2 (temperature)',
     4: 'TE4 (temperature)',
@@ -329,7 +329,7 @@ export default class Device extends AABBDevice {
                         unique_id: '$deviceid-power',
                         state_topic: '$this/power',
                         command_topic: '$this/power/set',
-                        name: '',
+                        name: 'Power',
                         icon: 'mdi:tumble-dryer',
                     },
                     remote_start: {
@@ -431,7 +431,7 @@ export default class Device extends AABBDevice {
                         name: 'Process state',
                         icon: 'mdi:cog-outline',
                         device_class: 'enum',
-                        options: ['', ...new Set(Object.values(PROCESS_STATES))],
+                        options: ['Off', ...new Set(Object.values(PROCESS_STATES))],
                     },
                     remaining_time: {
                         platform: 'sensor',
@@ -634,7 +634,7 @@ export default class Device extends AABBDevice {
         this.publishProperty('run_state', isDelayed ? 'Delayed Start' : (STATES[state] ?? `unknown (${state})`))
         this.publishProperty(
             'process_state',
-            isOff ? '' : (PROCESS_STATES[processState] ?? `unknown (${processState})`),
+            isOff ? 'Off' : (PROCESS_STATES[processState] ?? `unknown (${processState})`),
         )
         this.publishProperty('remaining_time', remainingTime)
         this.publishProperty('initial_time', initialTime)
@@ -665,8 +665,9 @@ export default class Device extends AABBDevice {
             this.publishProperty('cycle_duration', durationMin)
             this.publishProperty('cycle_end_time', endTime.toISOString())
         } else {
-            this.publishProperty('cycle_duration', '')
-            this.publishProperty('cycle_end_time', '')
+            this.publishProperty('cycle_duration', 'None')
+            this.publishProperty('cycle_start_time', 'None')
+            this.publishProperty('cycle_end_time', 'None')
         }
 
         this.publishProperty('error', hasError ? 'ON' : 'OFF')
