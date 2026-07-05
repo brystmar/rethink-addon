@@ -2,7 +2,7 @@
 
 Development build of Rethink, tracking the `master` branch.
 
-This add-on pulls `ghcr.io/alexw23/rethink:dev`, which CI publishes on every
+This add-on pulls `ghcr.io/brystmar/rethink-addon:dev`, which CI publishes on every
 push to `master`. Use it to test unreleased changes before they ship as a
 tagged release.
 
