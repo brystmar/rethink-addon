@@ -3,7 +3,7 @@ description: >-
     Local protocol translator for LG ThinQ appliances. Replaces the LG cloud
     with a direct local MQTT bridge — no cloud required after initial setup.
     Supports ThinQ1 and ThinQ2 devices. Includes ability to pair Wi-Fi from HAOS.
-version: '13.1.1'
+version: 'dev'
 slug: 'rethink-tb-addon'
 url: 'https://github.com/brystmar/rethink-addon/'
 init: false
@@ -51,7 +51,6 @@ schema:
     wifi_password: password?
 
 arch:
-    - aarch64
     - amd64
 
-image: 'ghcr.io/brystmar/rethink'
+image: 'ghcr.io/brystmar/rethink-addon'
